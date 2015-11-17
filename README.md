@@ -1,6 +1,6 @@
 # Download Github Gists
 
-> A Bash script for downloading all of a users Github gists.
+> A PHP script for downloading all of a users Github gists.
 
 ## Install
 

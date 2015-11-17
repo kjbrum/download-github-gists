@@ -1,1 +1,121 @@
-/Users/kylebrumm/bin/download-gists
+#!/usr/bin/php
+
+<?php
+    /**
+     *  Download Github Gists
+     *  Download all of a users gists from Github.
+     *  Copyright (C) Kyle Brumm <http://kylebrumm.com>
+     */
+
+    // Make sure an argument has been passed
+    if( count( $argv ) < 2 ) {
+        usage();
+        exit;
+    } else {
+        $user_pieces = explode( ':', $argv[1] );
+
+        if( count( $user_pieces ) > 1 ) {
+            $GITHUB_USERNAME = $user_pieces[0];
+            $GITHUB_PASSWORD = $user_pieces[1];
+        } else {
+            $GITHUB_USERNAME = $argv[1];
+            $GITHUB_PASSWORD = '';
+        }
+    }
+
+    // Get the location
+    if( empty( $argv[2] ) ) {
+        $location = getenv( 'HOME' ).'/Downloads/gists';
+    } else {
+        $location = $argv[2];
+    }
+
+    $url = "https://api.github.com/users/$GITHUB_USERNAME/gists?per_page=100";
+
+    // Get all the gists
+    $curl = curl_init();
+    curl_setopt( $curl, CURLOPT_URL, $url );
+    curl_setopt( $curl, CURLOPT_USERAGENT, $GITHUB_USERNAME );
+    if( !empty( $GITHUB_PASSWORD ) ) {
+        curl_setopt( $curl, CURLOPT_USERPWD, $GITHUB_USERNAME.':'.$GITHUB_PASSWORD );
+    }
+    curl_setopt( $curl, CURLOPT_RETURNTRANSFER, 1 );
+
+    $data = curl_exec( $curl );
+    curl_close( $curl);
+
+    $gists = json_decode( $data, true );
+
+    if( !empty( $gists['message'] ) ) {
+        echo $gists['message']."\n";
+        exit;
+    }
+
+    foreach( $gists as $gist ) {
+        $name_array = object_to_array( $gist['files'] );
+        $name = array_keys( $name_array );
+
+        $gist_urls[] = $name_array[$name[0]]['raw_url'];
+    }
+
+    // Loop throught the gist urls and get the contents
+    echo "Downloading $GITHUB_USERNAME's gists";
+    foreach( $gist_urls as $gist_url ) {
+        $raw_url_curl = curl_init();
+        curl_setopt( $raw_url_curl, CURLOPT_URL, $gist_url );
+        curl_setopt( $raw_url_curl, CURLOPT_USERAGENT, $GITHUB_USERNAME );
+        if( !empty( $GITHUB_PASSWORD ) ) {
+            curl_setopt( $raw_url_curl, CURLOPT_USERPWD, $GITHUB_USERNAME.':'.$GITHUB_PASSWORD );
+        }
+        curl_setopt( $raw_url_curl, CURLOPT_RETURNTRANSFER, 1 );
+
+        $gist = curl_exec( $raw_url_curl );
+        curl_close( $raw_url_curl);
+
+        // Get the filename from the url
+        $url_pieces = explode( '/', $gist_url );
+        $filename = array_pop( $url_pieces );
+
+        $filename = str_replace( '%20', '_', $filename );
+
+        if( !file_exists( $location ) ) {
+            mkdir( $location, 0755, true );
+        }
+
+        // Save the files
+        $file = file_get_contents( $gist_url );
+        file_put_contents( $location.'/'.$filename, $file );
+        echo '.';
+    }
+
+    echo "\nGists successfully saved to $location\n\n";
+
+
+    ////////////////////////////////////////////////////////
+    // Helper Functions
+    ////////////////////////////////////////////////////////
+    function object_to_array($data) {
+        if( is_array( $data ) || is_object( $data ) ) {
+            $result = array();
+            foreach( $data as $key => $value ) {
+                $result[$key] = object_to_array( $value );
+            }
+            return $result;
+        }
+        return $data;
+    }
+
+    function usage() {
+        echo "Download all of a users gists from Github.
+
+Usage:
+    download-gists kjbrum
+    download-gists kjbrum:myp@ssw0rd
+    download-gists kjbrum ./
+    download-gists kjbrum:myp@ssw0rd ./
+
+Arguments:
+    username:password    The username for getting gists. You can optionally add the password to get secret gists
+    location             Location to save the gists (Default: ~/Downloads/gists)\n\n";
+    }
+?>
