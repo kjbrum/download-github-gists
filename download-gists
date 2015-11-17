@@ -109,10 +109,10 @@
         echo "Download all of a users gists from Github.
 
 Usage:
-    download-gists kjbrum
-    download-gists kjbrum:myp@ssw0rd
-    download-gists kjbrum ./
-    download-gists kjbrum:myp@ssw0rd ./
+    download-gists <username>
+    download-gists <username>:<password>
+    download-gists <username> ./
+    download-gists <username>:<password> ./
 
 Arguments:
     username:password    The username for getting gists. You can optionally add the password to get secret gists
