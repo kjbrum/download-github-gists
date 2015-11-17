@@ -4,8 +4,10 @@
 
 ## Install
 
-1. `curl https://raw.githubusercontent.com/kjbrum/download-github-gists/master/download-gists > ~/bin/download-gists`
-2. chmod +x ~/bin/download-gists
+```
+$ curl https://raw.githubusercontent.com/kjbrum/download-github-gists/master/download-gists > ~/bin/download-gists
+$ chmod +x ~/bin/download-gists
+```
 
 ## Usage
 
